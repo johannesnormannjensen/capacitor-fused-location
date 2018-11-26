@@ -1,5 +1,5 @@
 {
-  "name": "capacitor-fused-location",
+  "name": "@jnormannj/capacitor-fused-location",
   "version": "0.0.1",
   "description": "Gives access to Google Play Services location. (Android only)",
   "main": "dist/esm/index.js",
@@ -10,7 +10,10 @@
     "watch": "tsc --watch",
     "prepublishOnly": "npm run build"
   },
-  "author": "Johannes Normann Jensen",
+  "author": {
+    "name": "Johannes Normann Jensen",
+    "email": "johannesnormannjensen@gmail.com"
+  },
   "license": "MIT",
   "dependencies": {
     "@capacitor/core": "latest"
