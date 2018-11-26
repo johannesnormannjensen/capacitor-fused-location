@@ -1,5 +1,5 @@
 {
-  "name": "@jnormannj/capacitor-fused-location",
+  "name": "@johannesnormannjensen/capacitor-fused-location",
   "version": "0.0.1",
   "description": "Gives access to Google Play Services location. (Android only)",
   "main": "dist/esm/index.js",
