@@ -9,5 +9,5 @@ Essentially this is just a copy of the pull request not yet merged into the offi
 ## Installation
 
 ```bash
-npm i --save @jnormannj/capacitor-fused-location
+npm i --save @johannesnormannjensen/capacitor-fused-location
 ```

@@ -1,4 +1,4 @@
-package com.jnormannj.plugin;
+package com.johannesnormannjensen.plugin;
 
 import android.content.pm.PackageManager;
 import android.location.Location;
