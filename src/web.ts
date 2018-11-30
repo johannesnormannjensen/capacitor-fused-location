@@ -1,4 +1,4 @@
-import {WebPlugin} from '@capacitor/core';
+import {CallbackID, WebPlugin} from '@capacitor/core';
 import {
     FusedLocationOptions,
     FusedLocationPlugin,
@@ -16,8 +16,8 @@ export class FusedLocationPluginWeb extends WebPlugin implements FusedLocationPl
         });
     }
 
-    getCurrentPosition(options?: FusedLocationOptions): Promise<FusedLocationPosition> {
-        return new Promise((resolve, reject) => {
+    async getCurrentPosition(options?: FusedLocationOptions): Promise<FusedLocationPosition> {
+        return new Promise<FusedLocationPosition>((resolve, reject) => {
             return this.requestPermissions().then((_result: PermissionsRequestResult) => {
                 window.navigator.geolocation.getCurrentPosition((pos) => {
                     resolve(pos);
@@ -32,7 +32,7 @@ export class FusedLocationPluginWeb extends WebPlugin implements FusedLocationPl
         });
     }
 
-    watchPosition(options: FusedLocationOptions, callback: FusedLocationWatchCallback): string {
+    watchPosition(options: FusedLocationOptions, callback: FusedLocationWatchCallback): CallbackID {
         let id = window.navigator.geolocation.watchPosition((pos) => {
             callback(pos);
         }, (err) => {
@@ -46,7 +46,7 @@ export class FusedLocationPluginWeb extends WebPlugin implements FusedLocationPl
         return `${id}`;
     }
 
-    clearWatch(options: { id: string }) {
+    async clearWatch(options: { id: string }): Promise<void> {
         window.navigator.geolocation.clearWatch(parseInt(options.id, 10));
         return Promise.resolve();
     }
