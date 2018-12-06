@@ -14,6 +14,7 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,14 +25,24 @@ public class FusedLocation extends Plugin {
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationCallback locationCallback;
 
+    @SuppressWarnings("MissingPermission")
     @PluginMethod()
-    public void getCurrentPosition(PluginCall call) {
+    public void getCurrentPosition(final PluginCall call) {
         if (!hasRequiredPermissions()) {
             saveCall(call);
             pluginRequestAllPermissions();
         } else {
-            requestLocationUpdates(call);
-            clearLocationUpdates();
+            getFusedLocationClient().getLastLocation()
+                    .addOnSuccessListener(new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            if (location == null) {
+                                call.success();
+                            } else {
+                                call.success(getJSObjectForLocation(location));
+                            }
+                        }
+                    });
         }
     }
 
@@ -72,8 +83,6 @@ public class FusedLocation extends Plugin {
 
     @SuppressWarnings("MissingPermission")
     private void requestLocationUpdates(final PluginCall call) {
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
-
         LocationRequest mLocationRequest;
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(7500);
@@ -93,11 +102,11 @@ public class FusedLocation extends Plugin {
             }
         };
 
-        mFusedLocationClient.requestLocationUpdates(mLocationRequest, locationCallback, Looper.myLooper());
+        getFusedLocationClient().requestLocationUpdates(mLocationRequest, locationCallback, Looper.myLooper());
     }
 
     private void clearLocationUpdates() {
-        mFusedLocationClient.removeLocationUpdates(locationCallback);
+        getFusedLocationClient().removeLocationUpdates(locationCallback);
     }
 
     @Override
@@ -135,5 +144,9 @@ public class FusedLocation extends Plugin {
         coords.put("speed", location.getSpeed());
         coords.put("heading", location.getBearing());
         return ret;
+    }
+
+    private FusedLocationProviderClient getFusedLocationClient() {
+        return this.mFusedLocationClient == null ? LocationServices.getFusedLocationProviderClient(getContext()) : this.mFusedLocationClient;
     }
 }
