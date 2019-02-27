@@ -19,7 +19,13 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import java.util.HashMap;
 import java.util.Map;
 
-@NativePlugin()
+@NativePlugin(
+        permissions={
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION
+        },
+        permissionRequestCode = PluginRequestCodes.GEOLOCATION_REQUEST_PERMISSIONS
+)
 public class FusedLocation extends Plugin {
     private Map<String, PluginCall> watchingCalls = new HashMap<>();
     private FusedLocationProviderClient mFusedLocationClient;
