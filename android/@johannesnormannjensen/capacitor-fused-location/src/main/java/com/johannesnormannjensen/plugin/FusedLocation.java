@@ -1,5 +1,6 @@
 package com.johannesnormannjensen.plugin;
 
+import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Looper;
@@ -9,6 +10,7 @@ import com.getcapacitor.NativePlugin;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+import com.getcapacitor.PluginRequestCodes;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -20,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @NativePlugin(
-        permissions={
+        permissions = {
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION
         },
@@ -31,25 +33,30 @@ public class FusedLocation extends Plugin {
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationCallback locationCallback;
 
-    @SuppressWarnings("MissingPermission")
     @PluginMethod()
     public void getCurrentPosition(final PluginCall call) {
         if (!hasRequiredPermissions()) {
             saveCall(call);
             pluginRequestAllPermissions();
         } else {
-            getFusedLocationClient().getLastLocation()
-                    .addOnSuccessListener(new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            if (location == null) {
-                                call.success();
-                            } else {
-                                call.success(getJSObjectForLocation(location));
-                            }
-                        }
-                    });
+            getLastPosition(call);
         }
+
+    }
+
+    @SuppressWarnings("MissingPermission")
+    private void getLastPosition(final PluginCall call) {
+        getFusedLocationClient().getLastLocation()
+                .addOnSuccessListener(new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        if (location == null) {
+                            call.success();
+                        } else {
+                            call.success(getJSObjectForLocation(location));
+                        }
+                    }
+                });
     }
 
     @PluginMethod(returnType = PluginMethod.RETURN_CALLBACK)
@@ -132,8 +139,7 @@ public class FusedLocation extends Plugin {
         }
 
         if (savedCall.getMethodName().equals("getCurrentPosition")) {
-            requestLocationUpdates(savedCall);
-            clearLocationUpdates();
+            getLastPosition(savedCall);
         } else {
             startWatch(savedCall);
         }
