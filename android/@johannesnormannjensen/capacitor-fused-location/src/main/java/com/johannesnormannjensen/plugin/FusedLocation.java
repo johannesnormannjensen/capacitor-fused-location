@@ -3,7 +3,6 @@ package com.johannesnormannjensen.plugin;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.os.Looper;
 import android.util.Log;
 
 import com.getcapacitor.JSObject;
@@ -11,13 +10,7 @@ import com.getcapacitor.NativePlugin;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
-import com.getcapacitor.PluginRequestCodes;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.patloew.rxlocation.RxLocation;
 
 import java.util.HashMap;
@@ -30,10 +23,12 @@ import io.reactivex.disposables.Disposable;
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION
         },
-        permissionRequestCode = PluginRequestCodes.GEOLOCATION_REQUEST_PERMISSIONS
+        permissionRequestCode = FusedLocation.PERMISSIONS_REQUEST_CODE
 )
 public class FusedLocation extends Plugin {
     private static final String TAG = FusedLocation.class.getSimpleName();
+
+    public static final int PERMISSIONS_REQUEST_CODE = 9090;
 
     private Map<String, Disposable> watchingCalls = new HashMap<>();
     private RxLocation mRxLocation;
