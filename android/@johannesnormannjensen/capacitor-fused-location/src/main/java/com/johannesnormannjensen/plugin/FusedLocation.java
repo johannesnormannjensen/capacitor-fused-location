@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Looper;
+import android.util.Log;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.NativePlugin;
@@ -17,9 +18,12 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.patloew.rxlocation.RxLocation;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import io.reactivex.disposables.Disposable;
 
 @NativePlugin(
         permissions = {
@@ -29,13 +33,19 @@ import java.util.Map;
         permissionRequestCode = PluginRequestCodes.GEOLOCATION_REQUEST_PERMISSIONS
 )
 public class FusedLocation extends Plugin {
-    private Map<String, PluginCall> watchingCalls = new HashMap<>();
-    private FusedLocationProviderClient mFusedLocationClient;
-    private LocationCallback locationCallback;
+    private static final String TAG = FusedLocation.class.getSimpleName();
+
+    private Map<String, Disposable> watchingCalls = new HashMap<>();
+    private RxLocation mRxLocation;
+    private Disposable mDisposable;
 
     @PluginMethod()
     public void getCurrentPosition(final PluginCall call) {
+        Log.d(TAG, "Requesting current position");
+
+        call.save();
         if (!hasRequiredPermissions()) {
+            Log.d(TAG, "Not permitted. Asking permission...");
             saveCall(call);
             pluginRequestAllPermissions();
         } else {
@@ -46,23 +56,23 @@ public class FusedLocation extends Plugin {
 
     @SuppressWarnings("MissingPermission")
     private void getLastPosition(final PluginCall call) {
-        getFusedLocationClient().getLastLocation()
-                .addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        if (location == null) {
-                            call.success();
-                        } else {
-                            call.success(getJSObjectForLocation(location));
-                        }
-                    }
-                });
+        getRxLocation().location().lastLocation().subscribe(location -> {
+            if (location == null) {
+                Log.d(TAG, "Last position is null");
+                call.success();
+            } else {
+                Log.d(TAG, "Last position is not null");
+                call.success(getJSObjectForLocation(location));
+            }
+        });
     }
 
     @PluginMethod(returnType = PluginMethod.RETURN_CALLBACK)
     public void watchPosition(PluginCall call) {
+        Log.d(TAG, "Requesting to watch position");
         call.save();
         if (!hasRequiredPermissions()) {
+            Log.d(TAG, "Not permitted. Asking permission...");
             saveCall(call);
             pluginRequestAllPermissions();
         } else {
@@ -72,54 +82,34 @@ public class FusedLocation extends Plugin {
 
     @SuppressWarnings("MissingPermission")
     private void startWatch(PluginCall call) {
-        requestLocationUpdates(call);
-        watchingCalls.put(call.getCallbackId(), call);
+        LocationRequest locationRequest;
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(7500);
+        locationRequest.setFastestInterval(5000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        Disposable disposable = getRxLocation().location().updates(locationRequest).subscribe(location -> {
+            if (location == null) {
+                call.success();
+            } else {
+                call.success(getJSObjectForLocation(location));
+            }
+        });
+        watchingCalls.put(call.getCallbackId(), disposable);
     }
 
     @SuppressWarnings("MissingPermission")
     @PluginMethod()
     public void clearWatch(PluginCall call) {
+        Log.d(TAG, "Requesting to clear watch");
         String callbackId = call.getString("id");
         if (callbackId != null) {
-            PluginCall removed = watchingCalls.remove(callbackId);
+            Disposable removed = watchingCalls.remove(callbackId);
             if (removed != null) {
-                removed.release(bridge);
+                removed.dispose();
             }
-        }
-
-        if (watchingCalls.size() == 0) {
-            clearLocationUpdates();
         }
 
         call.success();
-    }
-
-    @SuppressWarnings("MissingPermission")
-    private void requestLocationUpdates(final PluginCall call) {
-        LocationRequest mLocationRequest;
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(7500);
-        mLocationRequest.setFastestInterval(5000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                for (Location location : locationResult.getLocations()) {
-                    if (location == null) {
-                        call.success();
-                    } else {
-                        call.success(getJSObjectForLocation(location));
-                    }
-                }
-            }
-        };
-
-        getFusedLocationClient().requestLocationUpdates(mLocationRequest, locationCallback, Looper.myLooper());
-    }
-
-    private void clearLocationUpdates() {
-        getFusedLocationClient().removeLocationUpdates(locationCallback);
     }
 
     @Override
@@ -137,6 +127,8 @@ public class FusedLocation extends Plugin {
                 return;
             }
         }
+
+        Log.d(TAG, "Continuing saved call: " + savedCall.getMethodName());
 
         if (savedCall.getMethodName().equals("getCurrentPosition")) {
             getLastPosition(savedCall);
@@ -158,7 +150,10 @@ public class FusedLocation extends Plugin {
         return ret;
     }
 
-    private FusedLocationProviderClient getFusedLocationClient() {
-        return this.mFusedLocationClient == null ? LocationServices.getFusedLocationProviderClient(getContext()) : this.mFusedLocationClient;
+    private RxLocation getRxLocation() {
+        if (this.mRxLocation == null) {
+            this.mRxLocation = new RxLocation(getContext());
+        }
+        return this.mRxLocation;
     }
 }
