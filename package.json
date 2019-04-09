@@ -1,6 +1,6 @@
 {
   "name": "@johannesnormannjensen/capacitor-fused-location",
-  "version": "1.0.0-beta.19.5",
+  "version": "1.0.0-beta.19.6",
   "description": "Gives access to Google Play Services location. (Android only)",
   "main": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",

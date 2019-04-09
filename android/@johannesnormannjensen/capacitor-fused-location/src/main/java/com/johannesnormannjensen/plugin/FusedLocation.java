@@ -127,7 +127,7 @@ public class FusedLocation extends Plugin {
 
         if (savedCall.getMethodName().equals("getCurrentPosition")) {
             getLastPosition(savedCall);
-        } else {
+        } else if (savedCall.getMethodName().equals("watchPosition")) {
             startWatch(savedCall);
         }
     }
