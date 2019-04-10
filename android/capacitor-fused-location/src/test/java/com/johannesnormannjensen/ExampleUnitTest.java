@@ -1,4 +1,4 @@
-package com.getcapacitor;
+package com.johannesnormannjensen;
 
 import org.junit.Test;
 

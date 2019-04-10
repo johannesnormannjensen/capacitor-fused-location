@@ -1,4 +1,4 @@
-package com.getcapacitor.android;
+package com.johannesnormannjensen.plugin;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
