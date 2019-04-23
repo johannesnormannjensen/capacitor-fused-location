@@ -1,3 +1,6 @@
+#
+This project is now discontinued. Please use [jonoj-team/capacitor-fused-location](https://github.com/jonoj-team/capacitor-fused-location/tree/master) instead. 
+
 # capacitor-fused-location
 Fused location plugin for android
 
